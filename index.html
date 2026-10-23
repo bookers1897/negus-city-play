@@ -311,23 +311,38 @@ html, body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3127304,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":3175836,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
 // Lifecycle hook: Godot registers a callback on window.ncOnHide in Game._ready().
 window.ncOnHide = window.ncOnHide || function () {};
-// My location (v0.13): Godot calls window.ncLocate(cb); cb(ok, lat, lon, message). One shot, 10 s
-// timeout, a fix up to 10 minutes old is fine. Denied / unavailable / timeout → ok = false.
+// My location (v0.13): Godot calls window.ncLocate(cb); cb(ok, lat, lon, message) exactly once.
+// A fix up to 10 minutes old is fine. Denied / unavailable / timeout → ok = false. The browser's
+// own 10 s timeout only starts once the permission prompt is answered (Firefox: click away from
+// it and nothing ever comes back), so give up after 12 s here too (WebLocator does the same).
 window.ncLocate = function (cb) {
+	let done = false;
+	let timer = 0;
+	const answer = function (ok, lat, lon, msg) {
+		if (done) {
+			return;
+		}
+		done = true;
+		clearTimeout(timer);
+		cb(ok, lat, lon, msg);
+	};
 	if (!('geolocation' in navigator)) {
-		cb(false, 0, 0, 'This browser has no location service.');
+		answer(false, 0, 0, 'This browser has no location service.');
 		return;
 	}
+	timer = setTimeout(function () {
+		answer(false, 0, 0, 'Location timed out.');
+	}, 12000);
 	navigator.geolocation.getCurrentPosition(function (pos) {
-		cb(true, pos.coords.latitude, pos.coords.longitude, '');
+		answer(true, pos.coords.latitude, pos.coords.longitude, '');
 	}, function (err) {
-		cb(false, 0, 0, err && err.message ? err.message : 'Location unavailable.');
+		answer(false, 0, 0, err && err.message ? err.message : 'Location unavailable.');
 	}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
 };
 
