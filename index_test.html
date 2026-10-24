@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+		<title>Negus City</title>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<link rel="manifest" href="index.manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Negus City">
+<meta name="theme-color" content="#0a111f">
+<style>#status-progress{accent-color:#f5bd47;color:#f5bd47}#status-progress::-webkit-progress-value{background:#f5bd47}#status-progress::-moz-progress-bar{background:#f5bd47}</style>
+		<style>
+*, *::before, *::after {
+	box-sizing: border-box;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	width: 100vw;
+	height: 100vh;
+	width: 100dvw;
+	height: 100dvh;
+	background-color: #0a111f;
+	color: #f3f6fb;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+	overflow: hidden;
+	overscroll-behavior: none;
+	touch-action: none;
+	position: fixed;
+	inset: 0;
+}
+
+#canvas {
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	width: 100vw;
+	height: 100vh;
+	width: 100dvw;
+	height: 100dvh;
+	touch-action: none;
+	overscroll-behavior: none;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status {
+	position: fixed;
+	inset: 0;
+	padding:
+		calc(env(safe-area-inset-top, 0px) + 1.5rem)
+		calc(env(safe-area-inset-right, 0px) + 1.5rem)
+		calc(env(safe-area-inset-bottom, 0px) + 1.5rem)
+		calc(env(safe-area-inset-left, 0px) + 1.5rem);
+	background-color: #0a111f;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 1.25rem;
+	visibility: hidden;
+	opacity: 1;
+	transition: opacity 0.35s ease;
+	z-index: 10;
+}
+
+#status.status-fade-out {
+	opacity: 0;
+	pointer-events: none;
+}
+
+#status-splash {
+	max-width: min(300px, 76vw);
+	max-height: 42vh;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	mix-blend-mode: lighten;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-loader {
+	display: none;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.55rem;
+	width: min(320px, 80vw);
+}
+
+#status-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	color: #f3f6fb;
+}
+
+#status-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+#status-crown {
+	width: 1.2rem;
+	height: 1.2rem;
+	flex-shrink: 0;
+	stroke: #f5bd47;
+}
+
+#status-percent {
+	color: #f5bd47;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+}
+
+#status-progress {
+	display: none;
+	width: 100%;
+	height: 10px;
+	border: 1px solid rgba(245, 189, 71, 0.4);
+	border-radius: 999px;
+	background-color: #13203a;
+	accent-color: #f5bd47;
+	color: #f5bd47;
+	overflow: hidden;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+#status-progress::-webkit-progress-bar {
+	background-color: #13203a;
+	border-radius: 999px;
+}
+
+#status-progress::-webkit-progress-value {
+	background: linear-gradient(90deg, #d99b26 0%, #f5bd47 100%);
+	border-radius: 999px;
+	transition: width 0.12s ease;
+}
+
+#status-progress::-moz-progress-bar {
+	background: linear-gradient(90deg, #d99b26 0%, #f5bd47 100%);
+	border-radius: 999px;
+}
+
+#status-notice {
+	display: none;
+	background-color: rgba(24, 36, 62, 0.96);
+	border-radius: 0.75rem;
+	border: 1.5px solid #f5bd47;
+	color: #f8f9fc;
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.4;
+	margin: 0 1.5rem;
+	max-width: 24rem;
+	padding: 0.95rem 1.25rem;
+	text-align: center;
+	cursor: pointer;
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+	z-index: 2;
+}
+
+#update-pill {
+	position: fixed;
+	top: calc(env(safe-area-inset-top, 0px) + 12px);
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.95rem;
+	border-radius: 999px;
+	border: 1.5px solid #f5bd47;
+	background-color: rgba(13, 23, 42, 0.96);
+	color: #f5bd47;
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+	max-width: calc(100dvw - 24px);
+	cursor: pointer;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+	z-index: 30;
+	touch-action: manipulation;
+}
+
+#update-pill[hidden] {
+	display: none !important;
+}
+
+#update-pill .pill-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: #f5bd47;
+	box-shadow: 0 0 8px #f5bd47;
+}
+
+#install-hint {
+	position: fixed;
+	bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.65rem;
+	width: max-content;
+	max-width: calc(100dvw - 24px);
+	padding: 0.6rem 0.9rem;
+	border-radius: 0.75rem;
+	border: 1px solid rgba(245, 189, 71, 0.55);
+	background-color: rgba(13, 23, 42, 0.96);
+	color: #f3f6fb;
+	font-size: 0.84rem;
+	font-weight: 600;
+	line-height: 1.3;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+	z-index: 25;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+#install-hint[hidden] {
+	display: none !important;
+}
+
+#install-hint-close {
+	border: 0;
+	background: rgba(245, 189, 71, 0.16);
+	color: #f5bd47;
+	border-radius: 0.4rem;
+	width: 1.5rem;
+	height: 1.5rem;
+	font: inherit;
+	font-size: 0.8rem;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--false use-filter--true" src="index.png" alt="Negus City">
+			<div id="status-loader">
+				<div id="status-header">
+					<span id="status-brand">
+						<svg id="status-crown" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M3 7.5l4.4 3.8L12 4.5l4.6 6.8L21 7.5l-1.9 9.5H4.9z"/>
+							<path d="M5 20.5h14"/>
+						</svg>
+						<span id="status-label">Loading Negus City…</span>
+					</span>
+					<span id="status-percent">0%</span>
+				</div>
+				<progress id="status-progress" value="0" max="100"></progress>
+			</div>
+			<div id="status-notice" role="alert">Couldn't load — check your connection and tap to retry</div>
+		</div>
+
+		<button id="update-pill" type="button" hidden aria-live="polite">
+			<span class="pill-dot"></span>
+			<span>Update ready — tap to reload</span>
+		</button>
+
+		<div id="install-hint" role="status" hidden>
+			<span class="install-hint-text">Tap Share → Add to Home Screen to play full-screen</span>
+			<button id="install-hint-close" type="button" aria-label="Dismiss install hint">✕</button>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":["--","--seed=777","--q=0","--nomusic"],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":6206692,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+// Lifecycle hook: Godot registers a callback on window.ncOnHide in Game._ready().
+window.ncOnHide = window.ncOnHide || function () {};
+// My location (v0.13): Godot calls window.ncLocate(cb); cb(ok, lat, lon, message) exactly once.
+// A fix up to 10 minutes old is fine. Denied / unavailable / timeout → ok = false. The browser's
+// own 10 s timeout only starts once the permission prompt is answered (Firefox: click away from
+// it and nothing ever comes back), so give up after 12 s here too (WebLocator does the same).
+window.ncLocate = function (cb) {
+	let done = false;
+	let timer = 0;
+	const answer = function (ok, lat, lon, msg) {
+		if (done) {
+			return;
+		}
+		done = true;
+		clearTimeout(timer);
+		cb(ok, lat, lon, msg);
+	};
+	if (!('geolocation' in navigator)) {
+		answer(false, 0, 0, 'This browser has no location service.');
+		return;
+	}
+	timer = setTimeout(function () {
+		answer(false, 0, 0, 'Location timed out.');
+	}, 12000);
+	navigator.geolocation.getCurrentPosition(function (pos) {
+		answer(true, pos.coords.latitude, pos.coords.longitude, '');
+	}, function (err) {
+		answer(false, 0, 0, err && err.message ? err.message : 'Location unavailable.');
+	}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+};
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusLoader = document.getElementById('status-loader');
+	const statusProgress = document.getElementById('status-progress');
+	const statusPercent = document.getElementById('status-percent');
+	const statusNotice = document.getElementById('status-notice');
+	const updatePill = document.getElementById('update-pill');
+	const installHint = document.getElementById('install-hint');
+	const installHintClose = document.getElementById('install-hint-close');
+
+	// 1. Suppress browser zoom and pull-to-refresh gestures.
+	document.addEventListener('gesturestart', function (e) {
+		e.preventDefault();
+	}, { passive: false });
+	document.addEventListener('gesturechange', function (e) {
+		e.preventDefault();
+	}, { passive: false });
+	document.addEventListener('gestureend', function (e) {
+		e.preventDefault();
+	}, { passive: false });
+	document.addEventListener('dblclick', function (e) {
+		e.preventDefault();
+	}, { passive: false });
+
+	// 5. Request persistent IndexedDB storage so user:// saves survive eviction.
+	try {
+		if (navigator.storage && typeof navigator.storage.persist === 'function') {
+			navigator.storage.persist().catch(function () {});
+		}
+	} catch (_) {}
+
+	// 6. Autosave on tab hide / backgrounding.
+	function triggerHideSave() {
+		if (typeof window.ncOnHide === 'function') {
+			try {
+				window.ncOnHide();
+			} catch (err) {
+				console.error('ncOnHide callback failed:', err);
+			}
+		}
+	}
+	document.addEventListener('visibilitychange', function () {
+		if (document.visibilityState === 'hidden') {
+			triggerHideSave();
+		} else if (document.visibilityState === 'visible') {
+			checkForServiceWorkerUpdate();
+		}
+	});
+	window.addEventListener('pagehide', triggerHideSave);
+
+	// 7. One-time dismissible iOS Safari install hint when not running standalone.
+	const INSTALL_HINT_KEY = 'nc_install_hint_dismissed';
+	function isInstallHintDismissed() {
+		try {
+			return window.localStorage.getItem(INSTALL_HINT_KEY) === '1';
+		} catch (_) {
+			return false;
+		}
+	}
+	function dismissInstallHint(e) {
+		if (e) {
+			e.stopPropagation();
+		}
+		try {
+			window.localStorage.setItem(INSTALL_HINT_KEY, '1');
+		} catch (_) {}
+		if (installHint) {
+			installHint.hidden = true;
+		}
+	}
+	function maybeShowInstallHint() {
+		if (!installHint || isInstallHintDismissed()) {
+			return;
+		}
+		const ua = navigator.userAgent || '';
+		const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+		const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+		const isStandalone = (window.navigator.standalone === true)
+			|| (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+		if (isIOS && isSafari && !isStandalone) {
+			installHint.hidden = false;
+			installHint.addEventListener('click', dismissInstallHint);
+			if (installHintClose) {
+				installHintClose.addEventListener('click', dismissInstallHint);
+			}
+		}
+	}
+	maybeShowInstallHint();
+
+	// 4. Service worker update detection and "Update ready — tap to reload" pill.
+	let waitingWorker = null;
+	let reloadRequested = false;
+	let initialClaim = false;
+	const hadInitialController = Boolean('serviceWorker' in navigator && navigator.serviceWorker.controller);
+
+	function showUpdatePill(worker) {
+		if (worker) {
+			waitingWorker = worker;
+		}
+		if (updatePill) {
+			updatePill.hidden = false;
+		}
+	}
+
+	function claimInitialWorker(worker) {
+		if (!worker || navigator.serviceWorker.controller) {
+			return;
+		}
+		initialClaim = true;
+		try {
+			worker.postMessage('claim');
+		} catch (_) {}
+	}
+
+	function watchRegistration(reg) {
+		if (!reg) {
+			return;
+		}
+		if (reg.waiting) {
+			if (navigator.serviceWorker.controller) {
+				showUpdatePill(reg.waiting);
+			} else {
+				claimInitialWorker(reg.waiting);
+			}
+		} else if (reg.active && !navigator.serviceWorker.controller) {
+			claimInitialWorker(reg.active);
+		}
+		if (reg.__ncWatched) {
+			return;
+		}
+		reg.__ncWatched = true;
+		reg.addEventListener('updatefound', function () {
+			const installing = reg.installing;
+			if (!installing) {
+				return;
+			}
+			installing.addEventListener('statechange', function () {
+				if (installing.state === 'installed') {
+					if (navigator.serviceWorker.controller) {
+						showUpdatePill(installing);
+					} else {
+						claimInitialWorker(installing);
+					}
+				} else if (installing.state === 'activated' && !navigator.serviceWorker.controller) {
+					claimInitialWorker(installing);
+				}
+			});
+		});
+	}
+
+	function checkForServiceWorkerUpdate() {
+		if (!('serviceWorker' in navigator) || !GODOT_CONFIG['serviceWorker']) {
+			return;
+		}
+		navigator.serviceWorker.getRegistration().then(function (reg) {
+			if (reg) {
+				watchRegistration(reg);
+				reg.update().catch(function () {});
+			}
+		}).catch(function () {});
+	}
+
+	if ('serviceWorker' in navigator && GODOT_CONFIG['serviceWorker']) {
+		navigator.serviceWorker.addEventListener('controllerchange', function () {
+			if (reloadRequested) {
+				window.location.reload();
+			} else if (initialClaim) {
+				initialClaim = false;
+			} else if (hadInitialController) {
+				showUpdatePill(null);
+			}
+		});
+		checkForServiceWorkerUpdate();
+	}
+
+	if (updatePill) {
+		updatePill.addEventListener('click', function () {
+			reloadRequested = true;
+			if (waitingWorker) {
+				try {
+					waitingWorker.postMessage('claim');
+				} catch (_) {
+					window.location.reload();
+					return;
+				}
+				setTimeout(function () {
+					window.location.reload();
+				}, 350);
+			} else {
+				window.location.reload();
+			}
+		});
+	}
+
+	// 3. Branded loader & friendly error state.
+	let initializing = true;
+	let statusMode = '';
+
+	if (statusNotice) {
+		statusNotice.addEventListener('click', function () {
+			window.location.reload();
+		});
+	}
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			initializing = false;
+			if (statusPercent) {
+				statusPercent.textContent = '100%';
+			}
+			statusOverlay.classList.add('status-fade-out');
+			setTimeout(function () {
+				statusOverlay.remove();
+			}, 360);
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		if (statusLoader) {
+			statusLoader.style.display = mode === 'progress' ? 'flex' : 'none';
+		}
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line, idx) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			if (idx < lines.length - 1) {
+				statusNotice.appendChild(document.createElement('br'));
+			}
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		setStatusNotice("Couldn't load — check your connection and tap to retry");
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			displayFailureNotice(missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+					if (statusPercent) {
+						const pct = Math.min(100, Math.round((current / total) * 100));
+						statusPercent.textContent = pct + '%';
+					}
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+			checkForServiceWorkerUpdate();
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+
